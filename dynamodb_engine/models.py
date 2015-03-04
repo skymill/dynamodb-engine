@@ -5,7 +5,7 @@ import inspect
 
 from six import with_metaclass
 
-from dynamodbengine.connection import connect
+from dynamodb_engine.connection import connect
 
 # Meta data defaults
 DEFAULT = {
