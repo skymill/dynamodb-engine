@@ -43,6 +43,28 @@ class Attribute(object):
         self.range_key = range_key
         self.null = null
 
+    def get_name(self):
+        """
+        Get the attribute name
+        """
+        return self.attr_name
+
+    def is_hash_key(self):
+        """
+        Check if the attribute is the hash key
+
+        :returns: bool - True if it is the hash key
+        """
+        return self.hash_key
+
+    def is_range_key(self):
+        """
+        Check if the attribute is the range key
+
+        :returns: bool - True if it is the range key
+        """
+        return self.range_key
+
 
 class NumberAttribute(Attribute):
     """
