@@ -29,9 +29,9 @@ class User(Model):
     last_name = StringAttribute('lastName')
 
 
-class TestModel(unittest.TestCase):
+class TestModelCreateTable(unittest.TestCase):
     """
-    Unit tests for the model
+    Unit tests for the Model.create_table()
     """
     def setUp(self):
         """ Set up method """
