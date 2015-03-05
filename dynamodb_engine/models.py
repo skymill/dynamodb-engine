@@ -8,9 +8,9 @@ from boto.dynamodb2.exceptions import QueryError as BotoQueryError
 from boto.exception import JSONResponseError
 from six import with_metaclass
 
-from dynamodb_engine.attributes import Attribute
-from dynamodb_engine.connection import connect
-from dynamodb_engine.exceptions import (
+from .attributes import Attribute
+from .connection import connect
+from .exceptions import (
     MissingTableNameError,
     MissingHashKeyError,
     TableAlreadyExistsError,
@@ -55,8 +55,15 @@ class ModelMeta(type):
                 if attr_name == 'Meta':
                     if not hasattr(attr_obj, 'table_name'):
                         setattr(attr_obj, 'table_name', DEFAULT['table_name'])
+
                     if not hasattr(attr_obj, 'region'):
                         setattr(attr_obj, 'region', DEFAULT['region'])
+
+                    if not hasattr(attr_obj, 'dynamodb_local'):
+                        setattr(
+                            attr_obj,
+                            'dynamodb_local',
+                            DEFAULT['dynamodb_local'])
 
                     if hasattr(attr_obj, 'throughput'):
                         throughput = DEFAULT['throughput']

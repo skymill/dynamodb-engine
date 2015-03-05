@@ -4,7 +4,7 @@ Connection handling
 from boto.dynamodb2 import connect_to_region
 from boto.dynamodb2.layer1 import DynamoDBConnection
 
-from dynamodb_engine.exceptions import (
+from .exceptions import (
     MissingDynamoDBLocalHostError,
     MissingDynamoDBLocalPortError)
 
@@ -26,7 +26,7 @@ def connect(meta):
             meta.dynamodb_local['host'],
             meta.dynamodb_local['port'])
 
-    return connect_aws(meta.dynamodb_local.region)
+    return connect_aws(meta.region)
 
 
 def connect_aws(region):

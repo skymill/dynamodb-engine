@@ -2,7 +2,7 @@
 Attributes implementations
 """
 
-from dynamodb_engine import types
+from . import types
 
 
 class Attribute(object):
