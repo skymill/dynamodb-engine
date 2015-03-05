@@ -42,6 +42,14 @@ class TestModel(unittest.TestCase):
         """ Tear down method """
         self.user.delete_table()
 
+    def test_create_table_name(self):
+        """
+        Ensure that tables get the right name
+        """
+        self.assertEqual(
+            self.user.describe_table()['Table']['TableName'],
+            'users')
+
     def test_create_table_hash(self):
         """
         Test that a basic table can be created. Only hash key
