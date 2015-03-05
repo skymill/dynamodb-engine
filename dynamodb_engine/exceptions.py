@@ -56,3 +56,10 @@ class TableDeletionError(DynamoDBEngineException):
     An error occurred deleting the table
     """
     message = 'An unknown error occurred deleting the table'
+
+
+class QueryError(DynamoDBEngineException):
+    """
+    Query error
+    """
+    pass

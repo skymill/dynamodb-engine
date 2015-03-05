@@ -24,10 +24,25 @@ class User(Model):
 
 user = User()
 user.create_table(recreate=True)
+
+# Query
+results = user.query_count(email__eq='s@d.c')
+print('Query results: {}'.format(results))
+
+# Create the object
 user.email = 's@d.c'
 user.first_name = 'Sebastian'
 user.age = 42
 user.save()
+
+# Query
+results = user.query_count(email__eq='s@d.c')
+print('Query results: {}'.format(results))
+
+results = user.query(email__eq='s@d.c', limit=1)
+for result in results:
+    print(result['firstName'])
+
 print(user.first_name)
 print(type(user.first_name))
 print(user.age)
