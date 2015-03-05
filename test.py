@@ -25,6 +25,8 @@ class User(Model):
 user = User()
 user.create_table(recreate=True)
 
+print(user.describe_table())
+
 # Query
 results = user.query_count(email__eq='s@d.c')
 print('Query results: {}'.format(results))

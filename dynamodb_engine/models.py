@@ -142,6 +142,14 @@ class Model(with_metaclass(ModelMeta)):
         else:
             raise TableDeletionError
 
+    def describe_table(self):
+        """
+        Describe the DynamoDB table
+
+        :returns: dict -- DynamoDB table configuration
+        """
+        return self._table.describe()
+
     def save(self, overwrite=False):
         """
         Save the item
