@@ -49,6 +49,12 @@ class Attribute(object):
         """
         return self.attr_name
 
+    def get_value(self):
+        """
+        Get the valur if the attribute
+        """
+        return self.attr_value
+
     def is_hash_key(self):
         """
         Check if the attribute is the hash key
@@ -64,6 +70,21 @@ class Attribute(object):
         :returns: bool - True if it is the range key
         """
         return self.range_key
+
+    def __get__(self, instance, owner):
+        """
+        Getter
+        """
+        if instance:
+            return self.attr_value
+        else:
+            return self
+
+    def __set__(self, instance, value):
+        """
+        Setter
+        """
+        self.attr_value = value
 
 
 class NumberAttribute(Attribute):

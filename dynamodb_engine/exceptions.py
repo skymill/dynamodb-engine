@@ -42,3 +42,17 @@ class MissingTableNameError(DynamoDBEngineException):
     Missing table name in Meta configuration for a Model
     """
     message = 'Missing table_name in Meta class'
+
+
+class TableAlreadyExistsError(DynamoDBEngineException):
+    """
+    The table we're trying to create already exists
+    """
+    message = 'Table already exists'
+
+
+class TableDeletionError(DynamoDBEngineException):
+    """
+    An error occurred deleting the table
+    """
+    message = 'An unknown error occurred deleting the table'

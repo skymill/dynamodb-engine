@@ -2,14 +2,18 @@
 Model definitions
 """
 from boto.dynamodb2.fields import HashKey, RangeKey
+from boto.dynamodb2.items import Item
 from boto.dynamodb2.table import Table
+from boto.exception import JSONResponseError
 from six import with_metaclass
 
 from dynamodb_engine.attributes import Attribute
 from dynamodb_engine.connection import connect
 from dynamodb_engine.exceptions import (
     MissingTableNameError,
-    MissingHashKeyError)
+    MissingHashKeyError,
+    TableAlreadyExistsError,
+    TableDeletionError)
 
 # Meta data defaults
 DEFAULT = {
@@ -75,17 +79,23 @@ class Model(with_metaclass(ModelMeta)):
     """
     _connection = None
     _table = None
+    _item = None
 
     def __init__(self):
         """
         Constructor for the model
         """
         # Connect to DynamoDB
+        self._get_attributes()
         self._connect()
+        self._get_table()
 
-    def create_table(self):
+    def create_table(self, recreate=False):
         """
         Create a DynamoDB table
+
+        :type recreate: bool
+        :param recreate: If the table exists, delete it and create a new
         """
         if not self.Meta.table_name:
             raise MissingTableNameError
@@ -102,16 +112,56 @@ class Model(with_metaclass(ModelMeta)):
         if range_key:
             schema.append(RangeKey(range_key.get_name()))
 
-        table = Table.create(
-            self.Meta.table_name,
-            schema=schema,
-            throughput={
-                'read': self.Meta.throughput['read'],
-                'write': self.Meta.throughput['write']
-            },
-            connection=self._connection)
+        try:
+            table = Table.create(
+                self.Meta.table_name,
+                schema=schema,
+                throughput={
+                    'read': self.Meta.throughput['read'],
+                    'write': self.Meta.throughput['write']
+                },
+                connection=self._connection)
 
-        self._table = table
+            self._table = table
+        except JSONResponseError as error:
+            if error.body['Message'] == 'Cannot create preexisting table':
+                if recreate:
+                    self.delete_table()
+                    self.create_table()
+                else:
+                    raise TableAlreadyExistsError
+
+    def delete_table(self):
+        """
+        Delete the DynamoDB table
+        """
+        if self._table.delete():
+            return
+        else:
+            raise TableDeletionError
+
+    def save(self, overwrite=False):
+        """
+        Save the item
+
+        :type overwrite: bool
+        :param overwrite: Set to True if we should overwrite the item in the DB
+        """
+        # Create new Item object
+        if not self._item:
+            self._item = Item(
+                self._table,
+                data={
+                    attr.get_name(): attr.get_value()
+                    for attr in self._get_attributes()
+                })
+
+        # Update existing object
+        else:
+            for attr in self._get_attributes():
+                self._item[attr.get_name()] = attr.get_value()
+
+        self._item.save(overwrite=overwrite)
 
     def _connect(self):
         """
@@ -138,12 +188,13 @@ class Model(with_metaclass(ModelMeta)):
             if attr.startswith('_'):
                 continue
 
-            attr_cls = getattr(getattr(cls, attr), "__class__", None)
+            attr_obj = getattr(cls, attr)
+            attr_cls = getattr(attr_obj, '__class__', None)
             if not attr_cls:
                 continue
 
             if issubclass(attr_cls, (Attribute, )):
-                attrs.append(getattr(cls, attr))
+                attrs.append(attr_obj)
 
         return attrs
 
@@ -162,3 +213,11 @@ class Model(with_metaclass(ModelMeta)):
         for attribute in self._get_attributes():
             if attribute.is_range_key():
                 return attribute
+
+    def _get_table(self):
+        """
+        Get the table and populate self._table
+        """
+        self._table = Table(
+            self.Meta.table_name,
+            connection=self._connection)
