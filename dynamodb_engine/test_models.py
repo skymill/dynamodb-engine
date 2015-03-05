@@ -19,6 +19,10 @@ class User(Model):
             'host': DYNAMODB_HOST,
             'port': DYNAMODB_PORT
         }
+        throughput = {
+            'read': 22,
+            'write': 18
+        }
 
     email = StringAttribute('email', hash_key=True)
     first_name = StringAttribute('firstName')
@@ -49,6 +53,14 @@ class TestModel(unittest.TestCase):
         self.assertEqual(
             self.user.describe_table()['Table']['TableName'],
             'users')
+
+    def test_create_table_throughput(self):
+        """
+        Ensure that the throughput is provisioned properly
+        """
+        cus = self.user.describe_table()['Table']['ProvisionedThroughput']
+        self.assertEqual(cus['ReadCapacityUnits'], 22)
+        self.assertEqual(cus['WriteCapacityUnits'], 18)
 
     def test_create_table_hash(self):
         """
