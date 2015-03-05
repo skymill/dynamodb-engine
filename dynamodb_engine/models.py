@@ -95,7 +95,6 @@ class Model(with_metaclass(ModelMeta)):
         Constructor for the model
         """
         # Connect to DynamoDB
-        self._get_attributes()
         self._connect()
         self._get_table()
 
