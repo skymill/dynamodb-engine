@@ -4,11 +4,16 @@ Testing the Model
 import unittest
 
 from .attributes import StringAttribute
-from .exceptions import MissingHashKeyError
+from .connection import connect_local
+from .exceptions import (
+    MissingHashKeyError,
+    TableDeletionError)
 from .models import Model
 
 DYNAMODB_HOST = 'localhost'
 DYNAMODB_PORT = 8000
+
+CONNECTION = connect_local(DYNAMODB_HOST, DYNAMODB_PORT)
 
 
 class User(Model):
@@ -136,5 +141,26 @@ class TestModelCreateTable(unittest.TestCase):
         self.assertRaises(MissingHashKeyError, user.create_table)
 
 
-if __name__ == '__main__':
-    unittest.main()
+class TestModelDeleteTable(unittest.TestCase):
+    """ Test table deletion for models """
+    def test_delete_table(self):
+        """
+        Try create and delete on a table
+        """
+        self.assertNotIn('users', CONNECTION.list_tables()['TableNames'])
+
+        user = User()
+        user.create_table()
+        self.assertIn('users', CONNECTION.list_tables()['TableNames'])
+
+        user.delete_table()
+        self.assertNotIn('users', CONNECTION.list_tables()['TableNames'])
+
+    def test_delete_table_that_does_not_exist(self):
+        """
+        Try to remove a table that does not exist
+        """
+        self.assertNotIn('users', CONNECTION.list_tables()['TableNames'])
+
+        user = User()
+        self.assertRaises(TableDeletionError, user.delete_table)

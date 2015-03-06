@@ -143,10 +143,13 @@ class Model(with_metaclass(ModelMeta)):
         """
         Delete the DynamoDB table
         """
-        if self._table.delete():
-            return
-        else:
-            raise TableDeletionError
+        try:
+            if self._table.delete():
+                return
+            else:
+                raise TableDeletionError
+        except JSONResponseError as error:
+            raise TableDeletionError(error)
 
     def describe_table(self):
         """
