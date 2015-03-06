@@ -151,7 +151,11 @@ class Model(with_metaclass(ModelMeta)):
             else:
                 raise TableDeletionError
         except JSONResponseError as error:
-            raise TableDeletionError(error)
+            non_existing_msg = 'Cannot do operations on a non-existent table'
+            if error.body['Message'] == non_existing_msg:
+                raise TableDoesNotExistError(error.body['Message'])
+            else:
+                raise TableDeletionError
 
     def describe_table(self):
         """

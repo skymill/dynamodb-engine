@@ -7,7 +7,6 @@ from .attributes import StringAttribute
 from .connection import connect_local
 from .exceptions import (
     MissingHashKeyError,
-    TableDeletionError,
     TableDoesNotExistError)
 from .models import Model
 
@@ -164,7 +163,7 @@ class TestModelDeleteTable(unittest.TestCase):
         self.assertNotIn('users', CONNECTION.list_tables()['TableNames'])
 
         user = User()
-        self.assertRaises(TableDeletionError, user.delete_table)
+        self.assertRaises(TableDoesNotExistError, user.delete_table)
 
 
 class TestModelDescribeTable(unittest.TestCase):

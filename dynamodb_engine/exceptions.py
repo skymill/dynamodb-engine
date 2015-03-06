@@ -69,7 +69,7 @@ class TableUnknownError(DynamoDBEngineException):
     """
     An unknown error occurred in the table communication
     """
-    message = 'An unknown error occurred communicating the table'
+    message = 'An unknown error occurred communicating with the table'
 
 
 class QueryError(DynamoDBEngineException):
