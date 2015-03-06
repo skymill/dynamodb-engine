@@ -7,7 +7,8 @@ from .attributes import StringAttribute
 from .connection import connect_local
 from .exceptions import (
     MissingHashKeyError,
-    TableDeletionError)
+    TableDeletionError,
+    TableDoesNotExistError)
 from .models import Model
 
 DYNAMODB_HOST = 'localhost'
@@ -164,3 +165,63 @@ class TestModelDeleteTable(unittest.TestCase):
 
         user = User()
         self.assertRaises(TableDeletionError, user.delete_table)
+
+
+class TestModelDescribeTable(unittest.TestCase):
+    """
+    Unit tests for the Model.describe_table()
+    """
+    def setUp(self):
+        """ Set up method """
+        self.user = User()
+        self.user.create_table()
+
+    def tearDown(self):
+        """ Tear down method """
+        self.user.delete_table()
+
+    def test_describe_table(self):
+        """
+        Test that describe_table() gives you a table description
+        """
+        desc = self.user.describe_table()
+        self.assertIn('TableStatus', desc['Table'].keys())
+        self.assertIn('ProvisionedThroughput', desc['Table'].keys())
+        self.assertIn(
+            'ReadCapacityUnits',
+            desc['Table']['ProvisionedThroughput'].keys())
+        self.assertIn(
+            'WriteCapacityUnits',
+            desc['Table']['ProvisionedThroughput'].keys())
+        self.assertIn(
+            'LastIncreaseDateTime',
+            desc['Table']['ProvisionedThroughput'].keys())
+        self.assertIn(
+            'LastDecreaseDateTime',
+            desc['Table']['ProvisionedThroughput'].keys())
+        self.assertIn(
+            'NumberOfDecreasesToday',
+            desc['Table']['ProvisionedThroughput'].keys())
+        self.assertIn('ItemCount', desc['Table'].keys())
+        self.assertIn('KeySchema', desc['Table'].keys())
+        self.assertEqual(len(desc['Table']['KeySchema']), 1)
+        self.assertEqual(
+            desc['Table']['KeySchema'][0]['KeyType'],
+            'HASH')
+        self.assertEqual(
+            desc['Table']['KeySchema'][0]['AttributeName'],
+            'email')
+        self.assertIn('AttributeDefinitions', desc['Table'].keys())
+        self.assertIn('CreationDateTime', desc['Table'].keys())
+        self.assertIn('TableSizeBytes', desc['Table'].keys())
+
+    def test_describe_non_existing_table(self):
+        """
+        Try to describe a non existing table
+        """
+        class Test(Model):
+            class Meta:
+                table_name = 'something'
+
+        test = Test()
+        self.assertRaises(TableDoesNotExistError, test.describe_table)
