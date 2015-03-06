@@ -58,6 +58,20 @@ class TableDeletionError(DynamoDBEngineException):
     message = 'An unknown error occurred deleting the table'
 
 
+class TableDoesNotExistError(DynamoDBEngineException):
+    """
+    The table does not exist
+    """
+    message = 'The table does not exist'
+
+
+class TableUnknownError(DynamoDBEngineException):
+    """
+    An unknown error occurred in the table communication
+    """
+    message = 'An unknown error occurred communicating the table'
+
+
 class QueryError(DynamoDBEngineException):
     """
     Query error

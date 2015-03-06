@@ -15,6 +15,8 @@ from .exceptions import (
     MissingHashKeyError,
     TableAlreadyExistsError,
     TableDeletionError,
+    TableDoesNotExistError,
+    TableUnknownError,
     QueryError)
 
 # Meta data defaults
@@ -157,7 +159,13 @@ class Model(with_metaclass(ModelMeta)):
 
         :returns: dict -- DynamoDB table configuration
         """
-        return self._table.describe()
+        try:
+            return self._table.describe()
+        except JSONResponseError as error:
+            if error.body['message'].startswith('Requested resource not found'):
+                raise TableDoesNotExistError(error.body['message'])
+            else:
+                raise TableUnknownError(error.body['message'])
 
     def save(self, overwrite=False):
         """
