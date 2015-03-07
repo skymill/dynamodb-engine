@@ -16,6 +16,13 @@ class DynamoDBEngineException(Exception):
         super(DynamoDBEngineException, self).__init__(self.message)
 
 
+class AttributeException(DynamoDBEngineException):
+    """
+    Attribute exception
+    """
+    message = 'Attribute exception'
+
+
 class MissingDynamoDBLocalHostError(DynamoDBEngineException):
     """
     Missing host name for connecting to DynamoDB Local

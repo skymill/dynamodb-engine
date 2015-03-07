@@ -3,12 +3,14 @@ Attributes implementations
 """
 
 from . import types
+from .exception import AttributeException
+from .limits import (
+    NUMBER_ATTR_MIN,
+    NUMBER_ATTR_MAX)
 
 
 class Attribute(object):
-    """
-    Base attribute object
-    """
+    """ Base attribute object """
     attr_name = None
     attr_value = None
     attr_type = types.STRING
@@ -23,8 +25,7 @@ class Attribute(object):
             hash_key=False,
             range_key=False,
             null=False):
-        """
-        Constructor for the attribute
+        """ Constructor for the attribute
 
         :type name: str
         :param name: Name of the attribute
@@ -44,61 +45,48 @@ class Attribute(object):
         self.null = null
 
     def get_name(self):
-        """
-        Get the attribute name
-        """
+        """ Get the attribute name """
         return self.attr_name
 
     def get_value(self):
-        """
-        Get the valur if the attribute
-        """
+        """ Get the valur if the attribute """
         return self.attr_value
 
     def is_hash_key(self):
-        """
-        Check if the attribute is the hash key
+        """ Check if the attribute is the hash key
 
         :returns: bool - True if it is the hash key
         """
         return self.hash_key
 
     def is_range_key(self):
-        """
-        Check if the attribute is the range key
+        """ Check if the attribute is the range key
 
         :returns: bool - True if it is the range key
         """
         return self.range_key
 
     def __get__(self, instance, owner):
-        """
-        Getter
-        """
+        """ Getter """
         if instance:
             return self.attr_value
         else:
             return self
 
     def __set__(self, instance, value):
-        """
-        Setter
-        """
+        """ Setter """
         self.attr_value = value
 
 
 class NumberAttribute(Attribute):
-    """
-    Number attribute class
-    """
+    """ Number attribute class """
     def __init__(
             self,
             name,
             hash_key=False,
             range_key=False,
             null=False):
-        """
-        Constructor for the attribute
+        """ Constructor for the attribute
 
         :type name: str
         :param name: Name of the attribute
@@ -116,19 +104,25 @@ class NumberAttribute(Attribute):
             range_key=range_key,
             null=null)
 
+    def __set__(self, instance, value):
+        """ Setter """
+        if value < NUMBER_ATTR_MIN:
+            raise AttributeException('NumberAttribute is less than min limit')
+        if value > NUMBER_ATTR_MAX:
+            raise AttributeException('NumberAttribute is less than max limit')
+
+        self.attr_value = value
+
 
 class StringAttribute(Attribute):
-    """
-    String attribute class
-    """
+    """ String attribute class """
     def __init__(
             self,
             name,
             hash_key=False,
             range_key=False,
             null=False):
-        """
-        Constructor for the attribute
+        """ Constructor for the attribute
 
         :type name: str
         :param name: Name of the attribute
