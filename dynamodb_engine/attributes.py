@@ -3,10 +3,8 @@ Attributes implementations
 """
 
 from . import types
-from .exception import AttributeException
-from .limits import (
-    NUMBER_ATTR_MIN,
-    NUMBER_ATTR_MAX)
+from .exceptions import AttributeException
+from .limits import NUMBER_ATTR_MAX
 
 
 class Attribute(object):
@@ -51,6 +49,10 @@ class Attribute(object):
     def get_value(self):
         """ Get the valur if the attribute """
         return self.attr_value
+
+    def get_type(self):
+        """ Get the attribute type """
+        return self.attr_type
 
     def is_hash_key(self):
         """ Check if the attribute is the hash key
@@ -106,10 +108,14 @@ class NumberAttribute(Attribute):
 
     def __set__(self, instance, value):
         """ Setter """
-        if value < NUMBER_ATTR_MIN:
-            raise AttributeException('NumberAttribute is less than min limit')
-        if value > NUMBER_ATTR_MAX:
-            raise AttributeException('NumberAttribute is less than max limit')
+        if not isinstance(value, int) and not isinstance(value, float):
+            raise AttributeException(
+                '{} is not an integer nor float'.format(value))
+        if len(str(value).replace('.', '').replace('-', '')) > 38:
+            raise AttributeException(
+                'Number "{}" is more than {} digits long'.format(
+                    value,
+                    NUMBER_ATTR_MAX))
 
         self.attr_value = value
 
