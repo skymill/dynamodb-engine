@@ -118,9 +118,16 @@ class Model(with_metaclass(ModelMeta)):
             raise MissingHashKeyError
 
         # Create schema
-        schema = [HashKey(hash_key.get_name())]
+        schema = [
+            HashKey(
+                hash_key.get_name(),
+                data_type=hash_key.get_type())
+        ]
         if range_key:
-            schema.append(RangeKey(range_key.get_name()))
+            schema.append(
+                RangeKey(
+                    range_key.get_name(),
+                    data_type=range_key.get_type()))
 
         try:
             table = Table.create(
