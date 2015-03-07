@@ -173,10 +173,15 @@ class Model(with_metaclass(ModelMeta)):
         try:
             return self._table.describe()
         except JSONResponseError as error:
-            if error.body['message'].startswith('Requested resource not found'):
-                raise TableDoesNotExistError(error.body['message'])
+            msgs = [
+                'Cannot do operations on a non-existent table',
+                'Requested resource not found']
+            if error.body['Message'].startswith(msgs[1]):
+                raise TableDoesNotExistError(error.body['Message'])
+            elif error.body['Message'] == msgs[0]:
+                raise TableDoesNotExistError(error.body['Message'])
             else:
-                raise TableUnknownError(error.body['message'])
+                raise TableUnknownError(error.body['Message'])
 
     def save(self, overwrite=False):
         """
@@ -236,11 +241,12 @@ class Model(with_metaclass(ModelMeta)):
             raise QueryError(error)
 
     def _connect(self):
-        """
-        Connect to DynamoDB
-        """
+        """ Connect to DynamoDB """
         try:
-            self._connection = connect(self.Meta)
+            self._connection = connect(
+                region=self.Meta.region,
+                dynamodb_local_host=self.Meta.dynamodb_local['host'],
+                dynamodb_local_port=self.Meta.dynamodb_local['port'])
         except Exception:
             raise
 

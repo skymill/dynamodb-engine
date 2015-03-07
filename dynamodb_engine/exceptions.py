@@ -23,18 +23,18 @@ class AttributeException(DynamoDBEngineException):
     message = 'Attribute exception'
 
 
-class MissingDynamoDBLocalHostError(DynamoDBEngineException):
+class DynamoDBConnectionError(DynamoDBEngineException):
     """
-    Missing host name for connecting to DynamoDB Local
+    An error occurred connecting to DynamoDB
     """
-    message = 'Missing host for DynamoDB Local connection'
+    message = 'An error occurred connecting to DynamoDB'
 
 
-class MissingDynamoDBLocalPortError(DynamoDBEngineException):
+class DynamoDBLocalConnectionError(DynamoDBEngineException):
     """
-    Missing port name for connecting to DynamoDB Local
+    An error occurred connecting to DynamoDB Local
     """
-    message = 'Missing port for DynamoDB Local connection'
+    message = 'An error occurred connecting to DynamoDB Local'
 
 
 class MissingHashKeyError(DynamoDBEngineException):

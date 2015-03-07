@@ -5,28 +5,38 @@ from boto.dynamodb2 import connect_to_region
 from boto.dynamodb2.layer1 import DynamoDBConnection
 
 from .exceptions import (
-    MissingDynamoDBLocalHostError,
-    MissingDynamoDBLocalPortError)
+    DynamoDBConnectionError,
+    DynamoDBLocalConnectionError)
+
+CONNECTION = None
 
 
-def connect(meta):
+def connect(
+        region='us-east-1',
+        dynamodb_local_host=None,
+        dynamodb_local_port=8000):
+    """ Create a DynamoDB connection
+
+    :type region: str
+    :param region: AWS region
+    :type dynamodb_local_host: str
+    :param dynamodb_local_host:
+        Hostname for DynamoDB Local. If this is not None a connection to
+        DynamoDB Local will be done rather than a connection to AWS
+    :type dynamodb_local_port: int
+    :param dynamodb_local_port: Port number for DynamoDB Local
+    :returns: boto.dynamodb2.layer1.DynamoDBConnection -- Connection
     """
-    Connect to AWS or DynamoDB Local
+    global CONNECTION
+    if CONNECTION:
+        return CONNECTION
 
-    :type meta: dynamodb_engine.models.ModelMeta
-    :param meta: Model meta data object
-    :returns: boto.dynamodb2.layer1.DynamoDBConnection
-    """
-    if meta.dynamodb_local:
-        if not meta.dynamodb_local['host']:
-            raise MissingDynamoDBLocalHostError
-        if not meta.dynamodb_local['port']:
-            raise MissingDynamoDBLocalPortError
-        return connect_local(
-            meta.dynamodb_local['host'],
-            meta.dynamodb_local['port'])
+    if not dynamodb_local_host:
+        CONNECTION = connect_aws(region)
+    else:
+        CONNECTION = connect_local(dynamodb_local_host, dynamodb_local_port)
 
-    return connect_aws(meta.region)
+    return CONNECTION
 
 
 def connect_aws(region):
@@ -39,8 +49,8 @@ def connect_aws(region):
     """
     try:
         return connect_to_region(region)
-    except Exception:
-        raise
+    except Exception as error:
+        raise DynamoDBConnectionError(error)
 
 
 def connect_local(host, port):
@@ -60,5 +70,5 @@ def connect_local(host, port):
             aws_access_key_id='foo',
             aws_secret_access_key='bar',
             is_secure=False)
-    except Exception:
-        raise
+    except Exception as error:
+        raise DynamoDBLocalConnectionError(error)

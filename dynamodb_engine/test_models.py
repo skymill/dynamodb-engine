@@ -221,6 +221,10 @@ class TestModelDescribeTable(unittest.TestCase):
         class Test(Model):
             class Meta:
                 table_name = 'something'
+                dynamodb_local = {
+                    'host': DYNAMODB_HOST,
+                    'port': DYNAMODB_PORT
+                }
 
         test = Test()
         self.assertRaises(TableDoesNotExistError, test.describe_table)
