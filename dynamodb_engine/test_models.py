@@ -1,10 +1,8 @@
-"""
-Testing the Model
-"""
+""" Testing the Model """
 import unittest
 
 from .attributes import StringAttribute
-from .connection import connect_local
+from .connection import connect
 from .exceptions import (
     MissingHashKeyError,
     TableDoesNotExistError)
@@ -13,17 +11,15 @@ from .models import Model
 DYNAMODB_HOST = 'localhost'
 DYNAMODB_PORT = 8000
 
-CONNECTION = connect_local(DYNAMODB_HOST, DYNAMODB_PORT)
+CONNECTION = connect(
+    dynamodb_local_host=DYNAMODB_HOST,
+    dynamodb_local_port=DYNAMODB_PORT)
 
 
 class User(Model):
     """ Basic User model used for testing purposes """
     class Meta:
         table_name = 'users'
-        dynamodb_local = {
-            'host': DYNAMODB_HOST,
-            'port': DYNAMODB_PORT
-        }
         throughput = {
             'read': 22,
             'write': 18
@@ -35,9 +31,7 @@ class User(Model):
 
 
 class TestModelCreateTable(unittest.TestCase):
-    """
-    Unit tests for the Model.create_table()
-    """
+    """ Unit tests for the Model.create_table() """
     def setUp(self):
         """ Set up method """
         self.user = User()
@@ -52,25 +46,19 @@ class TestModelCreateTable(unittest.TestCase):
         self.user.delete_table()
 
     def test_create_table_name(self):
-        """
-        Ensure that tables get the right name
-        """
+        """ Ensure that tables get the right name """
         self.assertEqual(
             self.user.describe_table()['Table']['TableName'],
             'users')
 
     def test_create_table_throughput(self):
-        """
-        Ensure that the throughput is provisioned properly
-        """
+        """ Ensure that the throughput is provisioned properly """
         cus = self.user.describe_table()['Table']['ProvisionedThroughput']
         self.assertEqual(cus['ReadCapacityUnits'], 22)
         self.assertEqual(cus['WriteCapacityUnits'], 18)
 
     def test_create_table_hash(self):
-        """
-        Test that a basic table can be created. Only hash key
-        """
+        """ Test that a basic table can be created. Only hash key """
         class Test(Model):
             class Meta:
                 table_name = 'test'
@@ -123,9 +111,7 @@ class TestModelCreateTable(unittest.TestCase):
         test.delete_table()
 
     def test_missing_hash_key(self):
-        """
-        Check if a missing hash key raises an exception
-        """
+        """ Check if a missing hash key raises an exception """
         class User(Model):
             class Meta:
                 table_name = 'test'
@@ -144,9 +130,7 @@ class TestModelCreateTable(unittest.TestCase):
 class TestModelDeleteTable(unittest.TestCase):
     """ Test table deletion for models """
     def test_delete_table(self):
-        """
-        Try create and delete on a table
-        """
+        """ Try create and delete on a table """
         self.assertNotIn('users', CONNECTION.list_tables()['TableNames'])
 
         user = User()
@@ -157,9 +141,7 @@ class TestModelDeleteTable(unittest.TestCase):
         self.assertNotIn('users', CONNECTION.list_tables()['TableNames'])
 
     def test_delete_table_that_does_not_exist(self):
-        """
-        Try to remove a table that does not exist
-        """
+        """ Try to remove a table that does not exist """
         self.assertNotIn('users', CONNECTION.list_tables()['TableNames'])
 
         user = User()
@@ -167,9 +149,7 @@ class TestModelDeleteTable(unittest.TestCase):
 
 
 class TestModelDescribeTable(unittest.TestCase):
-    """
-    Unit tests for the Model.describe_table()
-    """
+    """ Unit tests for the Model.describe_table() """
     def setUp(self):
         """ Set up method """
         self.user = User()
@@ -180,9 +160,7 @@ class TestModelDescribeTable(unittest.TestCase):
         self.user.delete_table()
 
     def test_describe_table(self):
-        """
-        Test that describe_table() gives you a table description
-        """
+        """ Test that describe_table() gives you a table description """
         desc = self.user.describe_table()
         self.assertIn('TableStatus', desc['Table'].keys())
         self.assertIn('ProvisionedThroughput', desc['Table'].keys())
@@ -215,9 +193,7 @@ class TestModelDescribeTable(unittest.TestCase):
         self.assertIn('TableSizeBytes', desc['Table'].keys())
 
     def test_describe_non_existing_table(self):
-        """
-        Try to describe a non existing table
-        """
+        """ Try to describe a non existing table """
         class Test(Model):
             class Meta:
                 table_name = 'something'

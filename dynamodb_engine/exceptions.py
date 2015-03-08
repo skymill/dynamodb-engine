@@ -1,12 +1,8 @@
-"""
-Exceptions
-"""
+""" Exceptions """
 
 
 class DynamoDBEngineException(Exception):
-    """
-    DynamoDB Engine base error
-    """
+    """ DynamoDB Engine base error """
     message = None
 
     def __init__(self, message=None):
@@ -17,70 +13,55 @@ class DynamoDBEngineException(Exception):
 
 
 class AttributeException(DynamoDBEngineException):
-    """
-    Attribute exception
-    """
+    """ Attribute exception """
     message = 'Attribute exception'
 
 
+class ConnectionNotFoundError(DynamoDBEngineException):
+    """ Named connection not found """
+    message = 'The requested connection was not found'
+
+
 class DynamoDBConnectionError(DynamoDBEngineException):
-    """
-    An error occurred connecting to DynamoDB
-    """
+    """ An error occurred connecting to DynamoDB """
     message = 'An error occurred connecting to DynamoDB'
 
 
 class DynamoDBLocalConnectionError(DynamoDBEngineException):
-    """
-    An error occurred connecting to DynamoDB Local
-    """
+    """ An error occurred connecting to DynamoDB Local """
     message = 'An error occurred connecting to DynamoDB Local'
 
 
 class MissingHashKeyError(DynamoDBEngineException):
-    """
-    Missing hash key in model
-    """
+    """ Missing hash key in model """
     message = 'Missing hash key in model'
 
 
 class MissingTableNameError(DynamoDBEngineException):
-    """
-    Missing table name in Meta configuration for a Model
-    """
+    """ Missing table name in Meta configuration for a Model """
     message = 'Missing table_name in Meta class'
 
 
 class TableAlreadyExistsError(DynamoDBEngineException):
-    """
-    The table we're trying to create already exists
-    """
+    """ The table we're trying to create already exists """
     message = 'Table already exists'
 
 
 class TableDeletionError(DynamoDBEngineException):
-    """
-    An error occurred deleting the table
-    """
+    """ An error occurred deleting the table """
     message = 'An unknown error occurred deleting the table'
 
 
 class TableDoesNotExistError(DynamoDBEngineException):
-    """
-    The table does not exist
-    """
+    """ The table does not exist """
     message = 'The table does not exist'
 
 
 class TableUnknownError(DynamoDBEngineException):
-    """
-    An unknown error occurred in the table communication
-    """
+    """ An unknown error occurred in the table communication """
     message = 'An unknown error occurred communicating with the table'
 
 
 class QueryError(DynamoDBEngineException):
-    """
-    Query error
-    """
+    """ Query error """
     pass

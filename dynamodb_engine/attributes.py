@@ -1,6 +1,4 @@
-"""
-Attributes implementations
-"""
+""" Attributes implementations """
 
 from . import types
 from .exceptions import AttributeException

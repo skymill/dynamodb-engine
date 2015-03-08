@@ -1,6 +1,4 @@
-"""
-Model definitions
-"""
+""" Model definitions """
 from boto.dynamodb2.fields import HashKey, RangeKey
 from boto.dynamodb2.items import Item
 from boto.dynamodb2.table import Table
@@ -9,8 +7,9 @@ from boto.exception import JSONResponseError
 from six import with_metaclass
 
 from .attributes import Attribute
-from .connection import connect
+from .connection import get_connection, DEFAULT_CONNECTION_NAME
 from .exceptions import (
+    ConnectionNotFoundError,
     MissingTableNameError,
     MissingHashKeyError,
     TableAlreadyExistsError,
@@ -21,8 +20,6 @@ from .exceptions import (
 
 # Meta data defaults
 DEFAULT = {
-    'dynamodb_local': None,
-    'region': 'us-east-1',
     'table_name': None,
     'throughput': {
         'read': 1,
@@ -32,22 +29,15 @@ DEFAULT = {
 
 
 class ModelMetaDefault(object):
-    """
-    Default Meta data
-    """
-    dynamodb_local = DEFAULT['dynamodb_local']
+    """ Default Meta data """
     table_name = DEFAULT['table_name']
-    region = DEFAULT['region']
     throughput = DEFAULT['throughput']
 
 
 class ModelMeta(type):
-    """
-    Meta class for models
+    """ Meta class for models
 
     Possible variables:
-        - dynamodb_local
-        - region
         - table_name
         - throughput
     """
@@ -57,15 +47,6 @@ class ModelMeta(type):
                 if attr_name == 'Meta':
                     if not hasattr(attr_obj, 'table_name'):
                         setattr(attr_obj, 'table_name', DEFAULT['table_name'])
-
-                    if not hasattr(attr_obj, 'region'):
-                        setattr(attr_obj, 'region', DEFAULT['region'])
-
-                    if not hasattr(attr_obj, 'dynamodb_local'):
-                        setattr(
-                            attr_obj,
-                            'dynamodb_local',
-                            DEFAULT['dynamodb_local'])
 
                     if hasattr(attr_obj, 'throughput'):
                         throughput = DEFAULT['throughput']
@@ -85,24 +66,23 @@ class ModelMeta(type):
 
 
 class Model(with_metaclass(ModelMeta)):
-    """
-    DynamoDBEngine Model
-    """
+    """ DynamoDBEngine Model """
     _connection = None
     _table = None
     _item = None
 
-    def __init__(self):
-        """
-        Constructor for the model
-        """
+    def __init__(self, connection=DEFAULT_CONNECTION_NAME):
+        """ Constructor for the model """
         # Connect to DynamoDB
-        self._connect()
+        try:
+            self._connection = get_connection(DEFAULT_CONNECTION_NAME)
+        except ConnectionNotFoundError:
+            raise
+
         self._get_table()
 
     def create_table(self, recreate=False):
-        """
-        Create a DynamoDB table
+        """ Create a DynamoDB table
 
         :type recreate: bool
         :param recreate: If the table exists, delete it and create a new
@@ -130,7 +110,7 @@ class Model(with_metaclass(ModelMeta)):
                     data_type=range_key.get_type()))
 
         try:
-            table = Table.create(
+            self._table = Table.create(
                 self.Meta.table_name,
                 schema=schema,
                 throughput={
@@ -138,8 +118,6 @@ class Model(with_metaclass(ModelMeta)):
                     'write': self.Meta.throughput['write']
                 },
                 connection=self._connection)
-
-            self._table = table
         except JSONResponseError as error:
             if error.body['Message'] == 'Cannot create preexisting table':
                 if recreate:
@@ -149,9 +127,7 @@ class Model(with_metaclass(ModelMeta)):
                     raise TableAlreadyExistsError
 
     def delete_table(self):
-        """
-        Delete the DynamoDB table
-        """
+        """ Delete the DynamoDB table """
         try:
             if self._table.delete():
                 return
@@ -163,10 +139,11 @@ class Model(with_metaclass(ModelMeta)):
                 raise TableDoesNotExistError(error.body['Message'])
             else:
                 raise TableDeletionError
+        except AttributeError:
+            raise TableDoesNotExistError
 
     def describe_table(self):
-        """
-        Describe the DynamoDB table
+        """ Describe the DynamoDB table
 
         :returns: dict -- DynamoDB table configuration
         """
@@ -182,10 +159,11 @@ class Model(with_metaclass(ModelMeta)):
                 raise TableDoesNotExistError(error.body['Message'])
             else:
                 raise TableUnknownError(error.body['Message'])
+        except AttributeError:
+            raise TableDoesNotExistError
 
     def save(self, overwrite=False):
-        """
-        Save the item
+        """ Save the item
 
         :type overwrite: bool
         :param overwrite: Set to True if we should overwrite the item in the DB
@@ -207,10 +185,7 @@ class Model(with_metaclass(ModelMeta)):
         self._item.save(overwrite=overwrite)
 
     def query(self, *args, **kwargs):
-        """
-        Query the database
-
-        See http://boto.readthedocs.org/en/latest/ref/dynamodb2.html#boto.dynamodb2.table.Table.query_2 for usage details
+        """ Query the database
 
         :type *args: *args
         :param *args: Arguments
@@ -224,10 +199,7 @@ class Model(with_metaclass(ModelMeta)):
             raise QueryError(error)
 
     def query_count(self, *args, **kwargs):
-        """
-        Return the number of matches for a query
-
-        See http://boto.readthedocs.org/en/latest/ref/dynamodb2.html#boto.dynamodb2.table.Table.query_count for usage details
+        """ Return the number of matches for a query
 
         :type *args: *args
         :param *args: Arguments
@@ -240,20 +212,9 @@ class Model(with_metaclass(ModelMeta)):
         except BotoQueryError as error:
             raise QueryError(error)
 
-    def _connect(self):
-        """ Connect to DynamoDB """
-        try:
-            self._connection = connect(
-                region=self.Meta.region,
-                dynamodb_local_host=self.Meta.dynamodb_local['host'],
-                dynamodb_local_port=self.Meta.dynamodb_local['port'])
-        except Exception:
-            raise
-
     @classmethod
     def _get_attributes(cls):
-        """
-        Get attributes defined in this class
+        """ Get attributes defined in this class
 
         Excludes classes, functions and variables starting with _
 
@@ -277,25 +238,21 @@ class Model(with_metaclass(ModelMeta)):
         return attrs
 
     def _get_hash_key(self):
-        """
-        Return the hash key attribute
-        """
+        """ Return the hash key attribute """
         for attribute in self._get_attributes():
             if attribute.is_hash_key():
                 return attribute
 
     def _get_range_key(self):
-        """
-        Return the range key attribute
-        """
+        """ Return the range key attribute """
         for attribute in self._get_attributes():
             if attribute.is_range_key():
                 return attribute
 
     def _get_table(self):
-        """
-        Get the table and populate self._table
-        """
-        self._table = Table(
-            self.Meta.table_name,
-            connection=self._connection)
+        """ Get the table and populate self._table """
+        for table_name in self._connection.list_tables():
+            if table_name == self.Meta.table_name:
+                self._table = Table(
+                    self.Meta.table_name,
+                    connection=self._connection)
