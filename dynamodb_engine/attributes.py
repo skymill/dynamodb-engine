@@ -7,13 +7,6 @@ from .limits import NUMBER_ATTR_MAX
 
 class Attribute(object):
     """ Base attribute object """
-    attr_name = None
-    attr_value = None
-    attr_type = types.STRING
-    hash_key = False
-    range_key = False
-    null = False
-
     def __init__(
             self,
             name,
@@ -36,6 +29,7 @@ class Attribute(object):
         """
         self.attr_name = name
         self.attr_type = attr_type
+        self.attr_value = None
         self.hash_key = hash_key
         self.range_key = range_key
         self.null = null
@@ -44,13 +38,13 @@ class Attribute(object):
         """ Get the attribute name """
         return self.attr_name
 
-    def get_value(self):
-        """ Get the valur if the attribute """
-        return self.attr_value
-
     def get_type(self):
         """ Get the attribute type """
         return self.attr_type
+
+    def get_value(self):
+        """ Get the valur if the attribute """
+        return self.attr_value
 
     def is_hash_key(self):
         """ Check if the attribute is the hash key
@@ -66,14 +60,7 @@ class Attribute(object):
         """
         return self.range_key
 
-    def __get__(self, instance, owner):
-        """ Getter """
-        if instance:
-            return self.attr_value
-        else:
-            return self
-
-    def __set__(self, instance, value):
+    def __set__(self, obj, value):
         """ Setter """
         self.attr_value = value
 
@@ -104,7 +91,7 @@ class NumberAttribute(Attribute):
             range_key=range_key,
             null=null)
 
-    def __set__(self, instance, value):
+    def __set__(self, obj, value):
         """ Setter """
         if not isinstance(value, int) and not isinstance(value, float):
             raise AttributeException(
