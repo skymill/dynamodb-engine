@@ -65,3 +65,8 @@ class TableUnknownError(DynamoDBEngineException):
 class QueryError(DynamoDBEngineException):
     """ Query error """
     pass
+
+
+class ValidationError(DynamoDBEngineException):
+    """ Validation error """
+    message = 'Validation error'

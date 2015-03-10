@@ -5,7 +5,8 @@ from .attributes import StringAttribute
 from .connection import connect
 from .exceptions import (
     MissingHashKeyError,
-    TableDoesNotExistError)
+    TableDoesNotExistError,
+    ValidationError)
 from .models import Model
 
 DYNAMODB_HOST = 'localhost'
@@ -125,6 +126,25 @@ class TestModelCreateTable(unittest.TestCase):
 
         user = User()
         self.assertRaises(MissingHashKeyError, user.create_table)
+
+    def test_validation_error(self):
+        """ Test to ignore a required key """
+        class Test(Model):
+            class Meta:
+                table_name = 'test'
+                dynamodb_local = {
+                    'host': DYNAMODB_HOST,
+                    'port': DYNAMODB_PORT
+                }
+
+            username = StringAttribute('username', hash_key=True)
+            post = StringAttribute('post', range_key=True)
+
+        test = Test()
+        test.create_table()
+        test.username = 'myuser'
+        self.assertRaises(ValidationError, test.save)
+        test.delete_table()
 
 
 class TestModelDeleteTable(unittest.TestCase):

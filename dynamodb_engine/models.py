@@ -2,6 +2,7 @@
 from boto.dynamodb2.fields import HashKey, RangeKey
 from boto.dynamodb2.items import Item
 from boto.dynamodb2.table import Table
+from boto.dynamodb2.exceptions import ValidationException
 from boto.dynamodb2.exceptions import QueryError as BotoQueryError
 from boto.exception import JSONResponseError
 from six import with_metaclass
@@ -16,7 +17,8 @@ from .exceptions import (
     TableDeletionError,
     TableDoesNotExistError,
     TableUnknownError,
-    QueryError)
+    QueryError,
+    ValidationError)
 
 # Meta data defaults
 DEFAULT = {
@@ -182,7 +184,10 @@ class Model(with_metaclass(ModelMeta)):
             for attr in self._get_attributes():
                 self._item[attr.get_name()] = attr.get_value()
 
-        self._item.save(overwrite=overwrite)
+        try:
+            self._item.save(overwrite=overwrite)
+        except ValidationException as error:
+            raise ValidationError(error.body['Message'])
 
     def query(self, *args, **kwargs):
         """ Query the database
